@@ -3,218 +3,456 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cloudnix — Shop Onboarding Wizard</title>
+  <title>Shop Onboarding Wizard — Cloudnix</title>
 
-  <!-- Bootstrap CSS (CDN) -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root{
+      /* change --primary to #17c4c8 (turquoise) or #007bff (blue) if you prefer */
+      --primary: #ff7f50; /* orange */
+      --muted-bg: #f6f7f9;
+      --card-radius: 12px;
+    }
 
-  <!-- For accessibility / SEO -->
-  <meta name="description" content="Shop onboarding wizard - Cloudnix assignment (theme, product, pricing)" />
+    body{
+      background: var(--muted-bg);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#1f2937;
+      padding: 28px 12px;
+    }
+
+    .container-wizard{
+      max-width: 980px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 8px 30px rgba(20,20,30,0.06);
+    }
+
+    h1.h-main{
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    p.sub {
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    /* progress */
+    .wizard-progress {
+      height: 12px;
+      background: #e9eef6;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .wizard-progress .bar{
+      height: 100%;
+      width: 33%;
+      background: linear-gradient(90deg, var(--primary), #f06f38);
+      transition: width .35s ease;
+    }
+
+    /* steps */
+    .step {
+      display: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .28s ease, transform .28s ease;
+    }
+    .step.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* theme cards */
+    .theme-grid { gap: 18px; }
+    .theme-card{
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      border: 2px solid transparent;
+      background: #fff;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(20,20,30,0.03);
+    }
+    .theme-card:hover { transform: translateY(-6px); }
+    .theme-card img { width: 100%; height: 160px; object-fit: cover; display:block; }
+    .theme-card .body {
+      padding: 12px 14px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .theme-card.selected {
+      border-color: rgba(255,127,80,.95);
+      box-shadow: 0 10px 30px rgba(255,127,80,0.12);
+    }
+    .theme-label { font-weight:600; color:#111827; }
+
+    /* form */
+    .form-card{
+      background:#fff; padding:18px; border-radius:12px; box-shadow:0 8px 20px rgba(10,10,20,0.03);
+    }
+    label.form-label { font-weight:600; color:#374151; }
+
+    /* scroll area */
+    .scroll-box{
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 14px;
+      border-radius:10px;
+      background: #fff;
+      border: 1px solid #e6e9ef;
+    }
+    .price-row { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+    .price-card { flex:1; padding:12px; border-radius:10px; background:#fbfbfd; border:1px solid #eef1f7; }
+    .muted { color:#6b7280; font-size:.95rem; }
+
+    /* buttons */
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+      box-shadow: none;
+    }
+    .btn-primary:focus { box-shadow: 0 0 0 4px rgba(255,127,80,0.12); }
+
+    /* spacing */
+    .space-top { margin-top: 18px; }
+
+    /* small screens */
+    @media (max-width:768px){
+      .theme-card img { height:120px; }
+      .scroll-box { max-height:260px; }
+    }
+  </style>
 </head>
 <body>
-  <main class="container container-wizard my-5">
-    <header class="mb-3">
-      <h1 class="h3 page-title">Shop Onboarding</h1>
-      <p class="text-muted">Quickly set up your shop: choose a theme, add product types, and configure pricing.</p>
-    </header>
 
-    <!-- Progress -->
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <div class="small text-muted">Step <span id="stepNumber">1</span> of 3</div>
-      <div class="small text-muted">Primary: <strong id="colorName">Orange</strong></div>
+<div class="container-wizard">
+
+  <h1 class="h-main">Shop Onboarding</h1>
+  <p class="sub">Follow the quick steps to set up your shop — choose a theme, add product info, and set pricing.</p>
+
+  <!-- progress -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="small text-muted">Step <span id="stepNumber">1</span> of 3</div>
+    <div class="ms-3 text-end">
+      <small class="muted">Primary color: <strong id="colorName">Orange</strong></small>
     </div>
-    <div class="wizard-progress mb-4" aria-hidden="true"><div class="bar" id="progressBar"></div></div>
+  </div>
+  <div class="wizard-progress mb-4"><div class="bar" id="progressBar"></div></div>
 
-    <!-- Steps container -->
-    <section id="stepsContainer">
+  <!-- STEPS CONTAINER -->
+  <div id="stepsContainer">
 
-      <!-- STEP 1 -->
-      <section id="step1" class="step active" aria-labelledby="step1-title">
-        <h2 id="step1-title" class="h5">Step 1 — Select a theme</h2>
-        <p class="text-muted">Pick a visual theme for your storefront. You can change it later.</p>
+    <!-- STEP 1 -->
+    <section id="step1" class="step active" aria-labelledby="step1title">
+      <h3 id="step1title" class="h5">Step 1 — Choose a theme</h3>
+      <p class="muted">Pick a visual theme for your shop. You can change it later.</p>
 
-        <div class="row g-3 mt-3 theme-grid">
-          <div class="col-12 col-md-4">
-            <article class="theme-card" data-theme="Bags Theme" tabindex="0" role="button" aria-pressed="false">
-              <img loading="lazy" src="https://picsum.photos/id/1018/800/500" alt="Bags theme preview">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div>
-                    <div class="theme-label">Bags Theme <span class="badge badge-reco">Recommended</span></div>
-                    <div class="muted small">Fashion / Accessories</div>
-                  </div>
-                  <small class="muted">Preview</small>
-                </div>
+      <div class="row theme-grid gx-3 mt-3">
+        <div class="col-md-4">
+          <div class="theme-card" data-theme="Bags Theme" role="button" tabindex="0">
+            <img src="https://picsum.photos/id/1018/800/500" alt="Bags theme">
+            <div class="body">
+              <div>
+                <div class="theme-label">Bags Theme <span class="badge bg-warning text-dark ms-2">Recommended</span></div>
+                <div class="muted" style="font-size:.9rem">Fashion / Accessories</div>
               </div>
-            </article>
+              <div><small class="muted">Preview</small></div>
+            </div>
           </div>
+        </div>
 
-          <div class="col-12 col-md-4">
-            <article class="theme-card" data-theme="Flex Theme" tabindex="0" role="button" aria-pressed="false">
-              <img loading="lazy" src="https://picsum.photos/id/1015/800/500" alt="Flex theme preview">
-              <div class="card-body">
+        <div class="col-md-4">
+          <div class="theme-card" data-theme="Flex Theme" role="button" tabindex="0">
+            <img src="https://picsum.photos/id/1015/800/500" alt="Flex theme">
+            <div class="body">
+              <div>
                 <div class="theme-label">Flex Theme</div>
-                <div class="muted small">General Store</div>
+                <div class="muted" style="font-size:.9rem">General Store</div>
               </div>
-            </article>
+              <div><small class="muted">Preview</small></div>
+            </div>
           </div>
+        </div>
 
-          <div class="col-12 col-md-4">
-            <article class="theme-card" data-theme="Chic Theme" tabindex="0" role="button" aria-pressed="false">
-              <img loading="lazy" src="https://picsum.photos/id/1025/800/500" alt="Chic theme preview">
-              <div class="card-body">
+        <div class="col-md-4">
+          <div class="theme-card" data-theme="Chic Theme" role="button" tabindex="0">
+            <img src="https://picsum.photos/id/1025/800/500" alt="Chic theme">
+            <div class="body">
+              <div>
                 <div class="theme-label">Chic Theme</div>
-                <div class="muted small">Boutique / Luxury</div>
+                <div class="muted" style="font-size:.9rem">Luxury / Boutique</div>
               </div>
-            </article>
+              <div><small class="muted">Preview</small></div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="d-flex justify-content-between align-items-center mt-4">
-          <div class="muted small">Tip: Preview adapts for mobile & desktop.</div>
-          <button class="btn btn-primary next-step" id="toStep2">Next</button>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="muted">Tip: Themes are optimized for mobile & desktop.</div>
+        <div>
+          <button class="btn btn-primary next-step">Next</button>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- STEP 2 -->
-      <section id="step2" class="step" aria-labelledby="step2-title">
-        <h2 id="step2-title" class="h5">Step 2 — Product type & category</h2>
-        <p class="text-muted">Add product type, category and supported platforms.</p>
+    <!-- STEP 2 -->
+    <section id="step2" class="step" aria-labelledby="step2title">
+      <h3 id="step2title" class="h5">Step 2 — Product type & category</h3>
+      <p class="muted">Add the product type and categories that describe your shop. Add Platforms if you support apps.</p>
 
-        <div class="row mt-3">
-          <div class="col-12 col-lg-7">
-            <div class="form-card p-3">
-              <div class="mb-3">
-                <label class="form-label">Product Type</label>
-                <input id="productType" class="form-control" placeholder="e.g. Electronics">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Category</label>
-                <input id="productCategory" class="form-control" placeholder="e.g. Mobile Phones">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Platforms</label>
-                <select id="platform" class="form-select">
-                  <option value="">Select platform</option>
-                  <option>Web</option>
-                  <option>Android</option>
-                  <option>iOS</option>
-                  <option>All</option>
-                </select>
-              </div>
-              <div class="d-flex justify-content-between">
-                <button class="btn btn-outline-secondary prev-step">Back</button>
-                <div>
-                  <button class="btn btn-secondary me-2" id="saveDraft">Save Draft</button>
-                  <button class="btn btn-primary next-step">Next</button>
-                </div>
+      <div class="row mt-3">
+        <div class="col-lg-7">
+          <div class="form-card">
+            <div class="mb-3">
+              <label class="form-label">Product Type</label>
+              <input id="productType" class="form-control" placeholder="e.g. Clothing, Electronics">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <input id="productCategory" class="form-control" placeholder="e.g. Shirts, Mobiles">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Platform</label>
+              <select id="platform" class="form-select">
+                <option value="">Select platform</option>
+                <option>Web</option>
+                <option>Android</option>
+                <option>iOS</option>
+                <option>All</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Short description (optional)</label>
+              <textarea id="shortDesc" class="form-control" rows="2" placeholder="One-line description for your store"></textarea>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <button class="btn btn-outline-secondary prev-step">Back</button>
+              <div>
+                <button class="btn btn-secondary me-2" id="saveDraft">Save Draft</button>
+                <button class="btn btn-primary next-step">Next</button>
               </div>
             </div>
           </div>
-
-          <div class="col-12 col-lg-5 mt-3 mt-lg-0">
-            <aside class="form-card p-3">
-              <h6>Why this matters</h6>
-              <p class="muted">Correct types & categories help customers find your products faster and improve search relevance.</p>
-              <hr>
-              <div class="muted small">Example: Product Type <strong>Electronics</strong> → Category <strong>Mobile Phones</strong></div>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 3 -->
-      <section id="step3" class="step" aria-labelledby="step3-title">
-        <h2 id="step3-title" class="h5">Step 3 — Pricing & more</h2>
-        <p class="text-muted">Configure pricing defaults. Scroll inside the pricing box to see all fields.</p>
-
-        <div class="row mt-3">
-          <div class="col-12 col-lg-7">
-            <div class="scroll-box p-3">
-              <h6 class="mb-2">Plans</h6>
-
-              <div class="price-row mb-3">
-                <div class="price-card">
-                  <div class="fw-semibold">Basic</div>
-                  <div class="muted small">₹499/month</div>
-                  <div class="muted small mt-2">100 products, email support</div>
-                </div>
-                <div style="width:12px;"></div>
-                <div class="price-card">
-                  <div class="fw-semibold">Pro</div>
-                  <div class="muted small">₹999/month</div>
-                  <div class="muted small mt-2">Analytics, premium templates</div>
-                </div>
-              </div>
-
-              <h6 class="mb-2">Pricing defaults</h6>
-              <div class="row g-2">
-                <div class="col-sm-6">
-                  <label class="form-label small">Default list price (₹)</label>
-                  <input class="form-control" id="defaultListPrice" type="number" placeholder="999">
-                </div>
-                <div class="col-sm-6">
-                  <label class="form-label small">Default discount (%)</label>
-                  <input class="form-control" id="defaultDiscount" type="number" placeholder="10">
-                </div>
-                <div class="col-sm-6 mt-2">
-                  <label class="form-label small">GST (%)</label>
-                  <input class="form-control" id="defaultGST" type="number" placeholder="18">
-                </div>
-                <div class="col-sm-6 mt-2">
-                  <label class="form-label small">Shipping (₹)</label>
-                  <input class="form-control" id="defaultShipping" type="number" placeholder="50">
-                </div>
-              </div>
-
-              <hr class="my-3">
-              <h6 class="mb-2">Additional notes</h6>
-              <p class="muted small">You can set SKUs, stock levels and HSN/SAC codes on product creation. These defaults are global defaults for quick setup.</p>
-
-              <div style="height:40px"></div>
-            </div>
-          </div>
-
-          <div class="col-12 col-lg-5 mt-3 mt-lg-0">
-            <aside class="form-card p-3">
-              <h6 class="mb-2">Preview</h6>
-              <div class="d-flex gap-3 align-items-start">
-                <img loading="lazy" src="https://picsum.photos/id/1062/160/120" alt="product preview" style="width:120px; height:90px; object-fit:cover; border-radius:8px;">
-                <div>
-                  <div class="fw-semibold">Sample Product</div>
-                  <div class="muted small">₹1199 <s class="muted" style="opacity:.6">₹1499</s></div>
-                  <div class="muted small mt-2">Short product description will show here.</div>
-                </div>
-              </div>
-
-              <hr class="my-3">
-              <div class="muted small">Supported platforms</div>
-              <ul class="muted small ps-3">
-                <li>Web storefront</li>
-                <li>Android app</li>
-                <li>iOS app</li>
-              </ul>
-            </aside>
-          </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mt-4">
-          <button class="btn btn-outline-secondary prev-step">Back</button>
-          <button class="btn btn-success" id="finishBtn">Finish & Launch</button>
+        <div class="col-lg-5 mt-3 mt-lg-0">
+          <div class="form-card">
+            <h6 class="mb-2">Why this matters</h6>
+            <p class="muted" style="font-size:.95rem">Providing correct product types and categories helps customers find your products faster and improves search & recommendations.</p>
+
+            <hr />
+
+            <h6 class="mb-2">Example</h6>
+            <div class="muted">Product Type: <strong>Electronics</strong></div>
+            <div class="muted">Category: <strong>Mobile Phones</strong></div>
+            <div style="height:10px"></div>
+            <small class="muted">Tip: You can add sub-categories later when adding individual products.</small>
+          </div>
         </div>
-      </section>
+      </div>
 
     </section>
-  </main>
 
-  <!-- jQuery (CDN) -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js" defer></script>
-  <!-- Bootstrap bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-  <!-- App script -->
-  <script src="js/script.js" defer></script>
+    <!-- STEP 3 -->
+    <section id="step3" class="step" aria-labelledby="step3title">
+      <h3 id="step3title" class="h5">Step 3 — Pricing & Additional info</h3>
+      <p class="muted">Set up pricing, discounts and shipping info. Scroll inside the pricing box to see all options.</p>
+
+      <div class="row mt-3">
+        <div class="col-lg-7">
+          <div class="scroll-box">
+            <h6 class="mb-2">Plans</h6>
+
+            <div class="price-row">
+              <div class="price-card">
+                <div class="fw-semibold">Basic</div>
+                <div class="muted small">₹499 / month</div>
+                <div class="muted" style="margin-top:8px">Includes store setup, 100 products, email support.</div>
+              </div>
+              <div style="width:10px"></div>
+              <div class="price-card">
+                <div class="fw-semibold">Pro</div>
+                <div class="muted small">₹999 / month</div>
+                <div class="muted" style="margin-top:8px">Includes premium templates, analytics, chat support.</div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <h6 class="mb-2">Pricing details</h6>
+              <p class="muted">Net price, taxes, discounts and shipping charges can be managed per product later. Use these fields to set global defaults.</p>
+
+              <div class="row">
+                <div class="col-sm-6 mb-2">
+                  <label class="form-label">Default list price (₹)</label>
+                  <input class="form-control" type="number" placeholder="e.g. 999">
+                </div>
+                <div class="col-sm-6 mb-2">
+                  <label class="form-label">Default discount (%)</label>
+                  <input class="form-control" type="number" placeholder="e.g. 10">
+                </div>
+                <div class="col-sm-6 mb-2">
+                  <label class="form-label">GST (%)</label>
+                  <input class="form-control" type="number" placeholder="e.g. 18">
+                </div>
+                <div class="col-sm-6 mb-2">
+                  <label class="form-label">Shipping (₹)</label>
+                  <input class="form-control" type="number" placeholder="e.g. 50">
+                </div>
+              </div>
+
+              <hr />
+              <h6 class="mb-2">Additional info</h6>
+              <p class="muted">You can configure stock levels, SKU rules, and HSN/SAC codes when adding products. These defaults are just to help you start quickly.</p>
+            </div>
+
+            <div style="height:40px"></div> <!-- spacing to force scrollbar in some sizes -->
+          </div>
+        </div>
+
+        <div class="col-lg-5 mt-3 mt-lg-0">
+          <div class="form-card">
+            <h6 class="mb-2">Preview</h6>
+            <div style="display:flex; gap:12px; align-items:center">
+              <img src="https://picsum.photos/id/1062/160/120" alt="product" style="width:120px; height:90px; object-fit:cover; border-radius:10px;">
+              <div>
+                <div class="fw-semibold">Sample Product Title</div>
+                <div class="muted small">₹1,199  <s class="muted" style="opacity:.6">₹1,499</s></div>
+                <div class="muted" style="margin-top:6px; font-size:.94rem">Short product description will appear here.</div>
+              </div>
+            </div>
+
+            <hr />
+            <div class="muted small">Supported platforms</div>
+            <ul class="muted small" style="padding-left:18px">
+              <li>Web storefront</li>
+              <li>Android app</li>
+              <li>iOS app</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <button class="btn btn-outline-secondary prev-step">Back</button>
+        <button class="btn btn-success" id="finishBtn">Finish & Launch</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- jQuery & Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  $(function(){
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    function setStep(step){
+      // bounds
+      if(step < 1) step = 1;
+      if(step > totalSteps) step = totalSteps;
+      currentStep = step;
+
+      // show/hide
+      $('.step').removeClass('active');
+      $('#step' + step).addClass('active');
+
+      // update progress bar & text
+      const pct = Math.round((step / totalSteps) * 100);
+      $('#progressBar').css('width', pct + '%');
+      $('#stepNumber').text(step);
+
+      // focus on first input for accessibility
+      setTimeout(()=> {
+        $('#step' + step).find('input, button, select, textarea').first().focus();
+      }, 180);
+    }
+
+    // next / prev handlers (delegated)
+    $(document).on('click', '.next-step', function(){ setStep(currentStep + 1); });
+    $(document).on('click', '.prev-step', function(){ setStep(currentStep - 1); });
+
+    // theme selection
+    $(document).on('click', '.theme-card', function(){
+      $('.theme-card').removeClass('selected');
+      $(this).addClass('selected');
+      // optionally store selected theme name
+      const themeName = $(this).data('theme') || 'Custom theme';
+      // store to local (for demo)
+      localStorage.setItem('selectedTheme', themeName);
+    });
+
+    // keyboard support for theme cards
+    $(document).on('keydown', '.theme-card', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ $(this).trigger('click'); e.preventDefault(); }
+    });
+
+    // saveDraft example
+    $('#saveDraft').on('click', function(){
+      const payload = {
+        theme: localStorage.getItem('selectedTheme') || null,
+        productType: $('#productType').val(),
+        category: $('#productCategory').val(),
+        platform: $('#platform').val(),
+        shortDesc: $('#shortDesc').val()
+      };
+      localStorage.setItem('onboardingDraft', JSON.stringify(payload));
+      alert('Draft saved locally.');
+    });
+
+    // finish button
+    $('#finishBtn').on('click', function(){
+      // collect basic values and show a confirmation (real app would send to server)
+      const result = {
+        theme: localStorage.getItem('selectedTheme') || 'Not set',
+        productType: $('#productType').val(),
+        category: $('#productCategory').val(),
+        platform: $('#platform').val()
+      };
+      console.log('Onboarding result:', result);
+      alert('Onboarding complete — check console for captured values. (Demo)');
+    });
+
+    // restore draft if present
+    (function restoreDraft(){
+      const draft = localStorage.getItem('onboardingDraft');
+      if(draft){
+        try {
+          const d = JSON.parse(draft);
+          $('#productType').val(d.productType || '');
+          $('#productCategory').val(d.category || '');
+          $('#platform').val(d.platform || '');
+          $('#shortDesc').val(d.shortDesc || '');
+        } catch(e){}
+      }
+      const selTheme = localStorage.getItem('selectedTheme');
+      if(selTheme){
+        // mark matching theme (match by data-theme string)
+        $('.theme-card').each(function(){
+          if( ($(this).data('theme') || '').toLowerCase() === selTheme.toLowerCase() ){
+            $(this).addClass('selected');
+          }
+        });
+      }
+    })();
+
+    // initialize step
+    setStep(1);
+  });
+</script>
 </body>
 </html>
